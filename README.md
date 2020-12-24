@@ -18,7 +18,7 @@ Org2|8054|9051|9052
 Org3|6054|6051|6052
 Orderer|9054|7050
 
-
+![Test network config files relationship](test-network.png)
 Files changed include: (if currently inside test-network folder)
 ### (1) ./configtx/configtx.yaml
 Section: Organizations
@@ -179,7 +179,103 @@ set up CAs
  59       - test
 ```
 
-### (4) ./scripts/envVar.sh
+### (4) ./organizations/fabric-ca/registerEnroll.sh
+Add function createOrg3().
+```
+189 function createOrg3() {
+190 
+191   infoln "Enroll the CA admin"
+192   mkdir -p organizations/peerOrganizations/org3.example.com/
+193 
+194   export FABRIC_CA_CLIENT_HOME=${PWD}/organizations/peerOrganizations/org3.example.com/
+195   #  rm -rf $FABRIC_CA_CLIENT_HOME/fabric-ca-client-config.yaml
+196   #  rm -rf $FABRIC_CA_CLIENT_HOME/msp
+197 
+198   set -x
+199   fabric-ca-client enroll -u https://admin:adminpw@localhost:6054 --caname ca-org3 --tls.certfiles ${PWD}/organizations/fabric-ca/org3/tls-cert.pem
+200   { set +x; } 2>/dev/null
+201 
+202   echo 'NodeOUs:
+203   Enable: true
+204   ClientOUIdentifier:
+205     Certificate: cacerts/localhost-6054-ca-org3.pem
+206     OrganizationalUnitIdentifier: client
+207   PeerOUIdentifier:
+208     Certificate: cacerts/localhost-6054-ca-org3.pem
+209     OrganizationalUnitIdentifier: peer
+210   AdminOUIdentifier:
+211     Certificate: cacerts/localhost-6054-ca-org3.pem
+212     OrganizationalUnitIdentifier: admin
+213   OrdererOUIdentifier:
+214     Certificate: cacerts/localhost-6054-ca-org3.pem
+215     OrganizationalUnitIdentifier: orderer' >${PWD}/organizations/peerOrganizations/org3.example.com/msp/config.yaml
+216 
+217   infoln "Register peer0"
+218   set -x
+219   fabric-ca-client register --caname ca-org3 --id.name peer0 --id.secret peer0pw --id.type peer --tls.certfiles ${PWD}/organizations/fabric-ca/org3/tls-c    ert.pem
+220   { set +x; } 2>/dev/null
+221 
+222   infoln "Register user"
+223   set -x
+224   fabric-ca-client register --caname ca-org3 --id.name user1 --id.secret user1pw --id.type client --tls.certfiles ${PWD}/organizations/fabric-ca/org3/tls    -cert.pem
+225   { set +x; } 2>/dev/null
+226 
+227   infoln "Register the org admin"
+228   set -x
+229   fabric-ca-client register --caname ca-org3 --id.name org3admin --id.secret org3adminpw --id.type admin --tls.certfiles ${PWD}/organizations/fabric-ca/o    rg3/tls-cert.pem
+230   { set +x; } 2>/dev/null
+231 
+232   mkdir -p organizations/peerOrganizations/org3.example.com/peers
+233   mkdir -p organizations/peerOrganizations/org3.example.com/peers/peer0.org3.example.com
+234 
+235   infoln "Generate the peer0 msp"
+236   set -x
+237   fabric-ca-client enroll -u https://peer0:peer0pw@localhost:6054 --caname ca-org3 -M ${PWD}/organizations/peerOrganizations/org3.example.com/peers/peer0    .org3.example.com/msp --csr.hosts peer0.org3.example.com --tls.certfiles ${PWD}/organizations/fabric-ca/org3/tls-cert.pem
+238   { set +x; } 2>/dev/null
+239 
+240   cp ${PWD}/organizations/peerOrganizations/org3.example.com/msp/config.yaml ${PWD}/organizations/peerOrganizations/org3.example.com/peers/peer0.org3.exa    mple.com/msp/config.yaml
+241 
+242   infoln "Generate the peer0-tls certificates"
+243   set -x
+244   fabric-ca-client enroll -u https://peer0:peer0pw@localhost:6054 --caname ca-org3 -M ${PWD}/organizations/peerOrganizations/org3.example.com/peers/peer0    .org3.example.com/tls --enrollment.profile tls --csr.hosts peer0.org3.example.com --csr.hosts localhost --tls.certfiles ${PWD}/organizations/fabric-ca/or    g3/tls-cert.pem
+245   { set +x; } 2>/dev/null
+246 
+247   cp ${PWD}/organizations/peerOrganizations/org3.example.com/peers/peer0.org3.example.com/tls/tlscacerts/* ${PWD}/organizations/peerOrganizations/org3.ex    ample.com/peers/peer0.org3.example.com/tls/ca.crt
+248   cp ${PWD}/organizations/peerOrganizations/org3.example.com/peers/peer0.org3.example.com/tls/signcerts/* ${PWD}/organizations/peerOrganizations/org3.exa    mple.com/peers/peer0.org3.example.com/tls/server.crt
+249   cp ${PWD}/organizations/peerOrganizations/org3.example.com/peers/peer0.org3.example.com/tls/keystore/* ${PWD}/organizations/peerOrganizations/org3.exam    ple.com/peers/peer0.org3.example.com/tls/server.key
+250 
+251   mkdir -p ${PWD}/organizations/peerOrganizations/org3.example.com/msp/tlscacerts
+252   cp ${PWD}/organizations/peerOrganizations/org3.example.com/peers/peer0.org3.example.com/tls/tlscacerts/* ${PWD}/organizations/peerOrganizations/org3.ex    ample.com/msp/tlscacerts/ca.crt
+253 
+254   mkdir -p ${PWD}/organizations/peerOrganizations/org3.example.com/tlsca
+255   cp ${PWD}/organizations/peerOrganizations/org3.example.com/peers/peer0.org3.example.com/tls/tlscacerts/* ${PWD}/organizations/peerOrganizations/org3.ex    ample.com/tlsca/tlsca.org3.example.com-cert.pem
+256 
+257   mkdir -p ${PWD}/organizations/peerOrganizations/org3.example.com/ca
+258   cp ${PWD}/organizations/peerOrganizations/org3.example.com/peers/peer0.org3.example.com/msp/cacerts/* ${PWD}/organizations/peerOrganizations/org3.examp    le.com/ca/ca.org3.example.com-cert.pem
+259 
+260   mkdir -p organizations/peerOrganizations/org3.example.com/users
+261   mkdir -p organizations/peerOrganizations/org3.example.com/users/User1@org3.example.com
+262 
+263   infoln "Generate the user msp"
+264   set -x
+265   fabric-ca-client enroll -u https://user1:user1pw@localhost:6054 --caname ca-org3 -M ${PWD}/organizations/peerOrganizations/org3.example.com/users/User1    @org3.example.com/msp --tls.certfiles ${PWD}/organizations/fabric-ca/org3/tls-cert.pem
+266   { set +x; } 2>/dev/null
+267 
+268   cp ${PWD}/organizations/peerOrganizations/org3.example.com/msp/config.yaml ${PWD}/organizations/peerOrganizations/org3.example.com/users/User1@org3.exa    mple.com/msp/config.yaml
+269 
+270   mkdir -p organizations/peerOrganizations/org3.example.com/users/Admin@org3.example.com
+271 
+272   infoln "Generate the org admin msp"
+273   set -x
+274   fabric-ca-client enroll -u https://org3admin:org3adminpw@localhost:6054 --caname ca-org3 -M ${PWD}/organizations/peerOrganizations/org3.example.com/use    rs/Admin@org3.example.com/msp --tls.certfiles ${PWD}/organizations/fabric-ca/org3/tls-cert.pem
+275   { set +x; } 2>/dev/null
+276 
+277   cp ${PWD}/organizations/peerOrganizations/org3.example.com/msp/config.yaml ${PWD}/organizations/peerOrganizations/org3.example.com/users/Admin@org3.exa    mple.com/msp/config.yaml
+278 
+279 }
+```
+
+### (5) ./scripts/envVar.sh
 set up environment, line 49 change org3 port. If add more orgs, list corresponding port number.
 ```
  15 export PEER0_ORG3_CA=${PWD}/organizations/peerOrganizations/org3.example.com/peers/peer0.org3.example.com/tls/ca.crt
@@ -192,7 +288,7 @@ set up environment, line 49 change org3 port. If add more orgs, list correspondi
  49     export CORE_PEER_ADDRESS=localhost:6051
 ```
 
-### (5) ./scripts/createChannel.sh
+### (6) ./scripts/createChannel.sh
 change the channel profile used when createChannelTx() and createAnchorPeerTx();
 modify the steps,such as adding join Org3 peers to the channel (line 136), updating anchor peers for org3 (line 144).
 
@@ -236,7 +332,7 @@ modify the steps,such as adding join Org3 peers to the channel (line 136), updat
 ```
 
 
-### (6) ./scripts/deployCC.sh
+### (7) ./scripts/deployCC.sh
 add steps when deploying chaincode (line 325, 341, 347, 351, 356, 363).
 
 ```
@@ -292,7 +388,7 @@ add steps when deploying chaincode (line 325, 341, 347, 351, 356, 363).
 365 fi
 ```
 
-### (7) ./organizations/ccp-generate.sh 
+### (8) ./organizations/ccp-generate.sh 
 Because I choose to use '-ca' option, I need to add org3 information in this file.
 
 ```
@@ -307,9 +403,9 @@ Because I choose to use '-ca' option, I need to add org3 information in this fil
 ```
 
 ###  if not use '-ca' option:
-(8) create ./organizations/cryptogen/crypto-config-org3.yaml (copy and change from crypto-config-org2.yaml)
+(9) create ./organizations/cryptogen/crypto-config-org3.yaml (copy and change from crypto-config-org2.yaml)
 
-(9) ./network.sh
+(10) ./network.sh
 
 ```
 169     set -x
