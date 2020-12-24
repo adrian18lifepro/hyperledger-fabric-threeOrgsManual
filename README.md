@@ -1,5 +1,5 @@
 # Customise the Fabric test network
-## The original network
+## The origin test network
 Hyperledger-fabric tutorial provides a sample Fabric network which could deployed by Docker Compose. 
 
 `./network.sh up` would create a Fabric network that consists of two peer nodes, one ordering node.
@@ -22,9 +22,12 @@ Orderer|9054|7050
 Files changed include: (if currently inside test-network folder)
 ### (1) ./configtx/configtx.yaml
 Section: Organizations
+
+```
  10 #
  11 #   - This section defines the different organizational identities which will
  12 #   be referenced later in the configuration.
+```
 
 add Org3 information in this section.
 
@@ -65,10 +68,12 @@ add Org3 information in this section.
 149               Port: 6051
 ```
 
+```
 346 #   Profile
 347 #
 348 #   - Different configuration profiles may be encoded here to be specified
 349 #   as parameters to the configtxgen tool
+```
 
 change configuration profiles (TwoOrgsOrdererGenesis ->  ThreeOrgsOrdererGenesis; TwoOrgsChannel -> ThreeOrgsChannel)
 
@@ -153,7 +158,8 @@ set up peer nodes
 ```
 
 ### (3) ./docker/docker-compose-ca.yaml
-11 services:
+set up CAs
+`11 services:`
 
 ```
  45   ca_org3:
@@ -174,6 +180,7 @@ set up peer nodes
 ```
 
 ### (4) ./scripts/envVar.sh
+set up environment, line 49 change org3 port. If add more orgs, list corresponding port number.
 ```
  15 export PEER0_ORG3_CA=${PWD}/organizations/peerOrganizations/org3.example.com/peers/peer0.org3.example.com/tls/ca.crt
 
@@ -186,6 +193,9 @@ set up peer nodes
 ```
 
 ### (5) ./scripts/createChannel.sh
+change the channel profile used when createChannelTx() and createAnchorPeerTx();
+modify the steps,such as adding join Org3 peers to the channel (line 136), updating anchor peers for org3 (line 144).
+
 ```
  21 createChannelTx() {
  22 
@@ -227,6 +237,7 @@ set up peer nodes
 
 
 ### (6) ./scripts/deployCC.sh
+add steps when deploying chaincode (line 325, 341, 347, 351, 356, 363).
 
 ```
 316 ## package the chaincode
@@ -282,6 +293,7 @@ set up peer nodes
 ```
 
 ### (7) ./organizations/ccp-generate.sh 
+Because I choose to use '-ca' option, I need to add org3 information in this file.
 
 ```
  47 ORG=3
