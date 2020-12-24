@@ -159,9 +159,11 @@ set up peer nodes
 
 ### (3) ./docker/docker-compose-ca.yaml
 set up CAs
-`11 services:`
 
 ```
+11 services:
+......
+
  45   ca_org3:
  46     image: hyperledger/fabric-ca:$IMAGE_TAG
  47     environment:
@@ -181,6 +183,7 @@ set up CAs
 
 ### (4) ./organizations/fabric-ca/registerEnroll.sh
 Add function createOrg3().
+
 ```
 189 function createOrg3() {
 190 
@@ -277,6 +280,7 @@ Add function createOrg3().
 
 ### (5) ./scripts/envVar.sh
 set up environment, line 49 change org3 port. If add more orgs, list corresponding port number.
+
 ```
  15 export PEER0_ORG3_CA=${PWD}/organizations/peerOrganizations/org3.example.com/peers/peer0.org3.example.com/tls/ca.crt
 
